@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EU 男 T 日常调研看板 6.9 (最终决策版)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --accent: #0f172a;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #334155;
+            --highlight: #38bdf8;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        body { font-family: 'Inter', -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 30px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header { background: var(--accent); color: #fff; padding: 25px; border-radius: 12px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .seed-badge { background: var(--highlight); color: #000; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9em; letter-spacing: 0.5px; }
+
+        .section { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
+        .section-title { font-size: 1.2em; font-weight: 800; margin-bottom: 25px; color: var(--accent); border-left: 5px solid var(--highlight); padding-left: 15px; display: flex; align-items: center; gap: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; border-bottom: 2px solid var(--border); font-size: 0.85em; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.95em; vertical-align: middle; }
+        .trend-up { color: var(--success); font-weight: 700; }
+        .btn-explore { background: #f1f5f9; border: 1px solid var(--border); padding: 6px 15px; border-radius: 6px; cursor: pointer; font-size: 0.85em; font-weight: 600; color: var(--accent); transition: all 0.2s; }
+        .btn-explore:hover { background: var(--accent); color: #fff; }
+
+        .chart-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 30px; margin-bottom: 30px; }
+        .chart-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 25px; min-height: 420px; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05); }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-time { background: #fff; border: 1px solid var(--border); padding: 6px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9em; font-weight: 600; color: #64748b; }
+        .btn-time.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        .visual-main-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
+        .visual-column { display: flex; flex-direction: column; gap: 20px; }
+        .visual-header { background: #f1f5f9; padding: 10px 15px; border-radius: 8px; font-weight: 800; font-size: 0.9em; color: var(--accent); border: 1px solid var(--border); text-align: center; }
+        .visual-img-container { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #eee; min-height: 400px; display: flex; align-items: center; justify-content: center; }
+        .visual-img { width: 100%; height: auto; transition: transform 0.3s; cursor: zoom-in; }
+        
+        .analysis-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .analysis-item { border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; }
+        .analysis-item:last-child { border: none; padding-bottom: 0; }
+        .analysis-label { font-size: 0.75em; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .analysis-value { font-size: 0.9em; color: var(--accent); font-weight: 600; line-height: 1.4; }
+        .color-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 6px; border: 1px solid #e2e8f0; }
+
+        /* 生产决策模块样式 */
+        .prod-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .prod-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden; }
+        .prod-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--highlight); }
+        .prod-tag { position: absolute; top: 15px; right: 15px; font-size: 0.7em; font-weight: 900; background: #f1f5f9; padding: 4px 10px; border-radius: 4px; color: #64748b; }
+        
+        .prompt-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 0.8em; color: #334155; position: relative; line-height: 1.4; white-space: pre-wrap; word-break: break-all; }
+        .color-field { color: #f43f5e; font-weight: 900; background: #fff1f2; padding: 2px 4px; border-radius: 4px; border: 1px solid #fecdd3; }
+        .copy-btn { position: absolute; top: 5px; right: 5px; background: #fff; border: 1px solid var(--border); padding: 3px 6px; border-radius: 4px; font-size: 0.65em; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: bold; }
+        .copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        .logic-card { background: #f8fafc; border-radius: 10px; padding: 12px; font-size: 0.82em; color: #475569; line-height: 1.5; border: 1px solid #e2e8f0; }
+        .color-logic-title { font-weight: 800; color: var(--accent); margin-bottom: 8px; font-size: 0.9em; display: flex; align-items: center; gap: 5px; }
+        .color-pair { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+        .color-dot { width: 10px; height: 10px; border-radius: 50%; border: 1px solid #cbd5e1; }
+
+        .direction-list { margin: 0; padding-left: 18px; font-size: 0.85em; color: #475569; }
+        .direction-list li { margin-bottom: 8px; }
+        .schematic-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px; }
+        .schematic-item { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #fff; position: relative; aspect-ratio: 1 / 1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .schematic-img { width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; }
+        .schematic-label { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.8); color: #fff; font-size: 0.7em; padding: 6px 0; text-align: center; font-weight: 700; backdrop-filter: blur(2px); }
+
+        /* 反面教材库样式 */
+        .negative-section { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 30px; margin-top: 30px; }
+        .negative-title { color: #be123c; border-left: 5px solid #f43f5e; font-size: 1.2em; font-weight: 800; margin-bottom: 25px; padding-left: 15px; display: flex; align-items: center; gap: 10px; }
+        .negative-grid { display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 25px; }
+        .negative-case-card { background: #fff; border: 1px solid #fecdd3; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .warning-tag { background: #f43f5e; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 0.7em; font-weight: 900; width: fit-content; text-transform: uppercase; }
+        .negative-item { border-bottom: 1px solid #fff1f2; padding-bottom: 10px; }
+        .negative-item:last-child { border: none; padding-bottom: 0; }
+        .negative-label { font-size: 0.8em; font-weight: 800; color: #f43f5e; display: block; margin-bottom: 4px; }
+        .negative-value { font-size: 0.82em; color: #334155; line-height: 1.4; }
+
+        .neg-img-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .neg-img-box { border-radius: 8px; overflow: hidden; border: 2px dashed #f43f5e; position: relative; aspect-ratio: 1 / 1; background: #fff; }
+        .neg-img { width: 100%; height: 100%; object-fit: contain; }
+        .neg-img-tag { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(244, 63, 94, 0.9); color: #fff; font-size: 0.6em; padding: 4px 0; text-align: center; font-weight: 700; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+        .modal-content { background: #fff; padding: 40px; border-radius: 24px; width: 500px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .close { font-size: 2em; cursor: pointer; color: #94a3b8; line-height: 1; }
+        .sec-tag { background: #f1f5f9; border: 1px solid var(--border); padding: 8px 18px; border-radius: 10px; font-size: 0.9em; color: var(--accent); font-weight: 600; transition: all 0.2s; }
+        .sec-tag:hover { background: var(--highlight); border-color: var(--highlight); color: #000; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 1. 顶部 Header -->
+        <div class="header">
+            <div>
+                <span style="font-size: 0.85em; opacity: 0.8; font-weight: 600;">ROOT CATEGORY / 种子词</span>
+                <h1 style="margin: 8px 0 0; font-size: 2.2em; font-weight: 900; letter-spacing: -0.5px;">Men's T-shirt</h1>
+            </div>
+            <div class="seed-badge">REPORT V6.9 (Production Command) | 2026.04.06</div>
+        </div>
+
+        <!-- 2. 关键词挖掘 -->
+        <div class="section">
+            <div class="section-title">01. 核心属性挖掘 (Keyword Expansion Analysis)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">#</th>
+                        <th>拓展词 (Keyword)</th>
+                        <th>市场权重 (Weight)</th>
+                        <th>趋势 (7D)</th>
+                        <th style="text-align:right;">二级长尾探测</th>
+                    </tr>
+                </thead>
+                <tbody id="keywordTable"></tbody>
+            </table>
+        </div>
+
+        <!-- 3. 数据图表区 -->
+        <div class="chart-grid">
+            <div class="chart-box">
+                <div class="section-title">02. 实时权重占比 (1D Mix)</div>
+                <div style="height: 360px;"><canvas id="pieChart"></canvas></div>
+            </div>
+            <div class="chart-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <div class="section-title" style="margin:0;">03. 纵向趋势监测 (Longitudinal Trend)</div>
+                    <div class="controls">
+                        <button class="btn-time" onclick="updateChart(3)">3D</button>
+                        <button class="btn-time active" onclick="updateChart(7)">7D</button>
+                        <button class="btn-time" onclick="updateChart(30)">30D</button>
+                    </div>
+                </div>
+                <div style="height: 360px;"><canvas id="lineChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- 4. 视觉真相拆解 -->
+        <div class="section" style="background: #f1f5f9; border:none;">
+            <div class="section-title">04. 30图商品矩阵真相拆解 (Visual Truth Analysis)</div>
+            <div class="visual-main-grid">
+                <!-- Heavyweight Column -->
+                <div class="visual-column">
+                    <div class="visual-header">#1 Heavyweight Matrix</div>
+                    <div class="visual-img-container">
+                        <img src="https://sc02.alicdn.com/kf/A5bc80e95e53c47d4bc83b7aa7fb4747e6.png" class="visual-img" onerror="this.src='https://via.placeholder.com/400x600?text=Matrix+Loading...'">
+                    </div>
+                    <div class="analysis-card">
+                        <div class="analysis-item">
+                            <span class="analysis-label">视觉壳子剥离 (Visual Shell)</span>
+                            <div class="analysis-value">V01 Studio Minimalist. 30°硬侧光强化克重感；半脸构图引导自我代入。</div>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">印花基因反推 (Graphic Soul)</span>
+                            <div class="analysis-value">矩阵共性：极简/无印花。依靠“重磅”视觉资产支撑$18+溢价。</div>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">物理定性分析 (Product Physics)</span>
+                            <div class="analysis-value"><span class="color-swatch" style="background:#000;"></span>曜石黑占比55% (绝对统治选色)。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Oversized Column -->
+                <div class="visual-column">
+                    <div class="visual-header">#2 Oversized Matrix</div>
+                    <div class="visual-img-container">
+                        <img src="https://sc02.alicdn.com/kf/Abd73f4adbb4142a386f4c90ba1043130q.png" class="visual-img" onerror="this.src='https://via.placeholder.com/400x600?text=Matrix+Loading...'">
+                    </div>
+                    <div class="analysis-card">
+                        <div class="analysis-item">
+                            <span class="analysis-label">视觉壳子剥离 (Visual Shell)</span>
+                            <div class="analysis-value">V04 Urban Street. 真实街道虚化营造穿搭信任；落肩动态捕捉展示廓形。</div>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">印花基因反推 (Graphic Soul)</span>
+                            <div class="analysis-value">矩阵共性：赛博/二次元。高饱和对比色支撑潮流溢价。</div>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">物理定性分析 (Product Physics)</span>
+                            <div class="analysis-value"><span class="color-swatch" style="background:#333;"></span>水洗灰占比30% (街头怀旧核心选色)。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vintage Column -->
+                <div class="visual-column">
+                    <div class="visual-header">#3 Vintage Matrix</div>
+                    <div class="visual-img-container">
+                        <img src="https://sc02.alicdn.com/kf/A84912c47e27e4d138652e1e6be7c0f31p.png" class="visual-img" onerror="this.src='https://via.placeholder.com/400x600?text=Matrix+Loading...'">
+                    </div>
+                    <div class="analysis-card">
+                        <div class="analysis-item">
+                            <span class="analysis-label">视觉壳子剥离 (Visual Shell)</span>
+                            <div class="analysis-value">V03 Raw Concrete. 混凝土墙面+高对比阴影，模拟90s地下海报质感。</div>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">印花基因反推 (Graphic Soul)</span>
+                            <div class="analysis-value">矩阵共性：90s摇滚/裂纹印花。社交属性标签(Brother/Dog)表现强劲。</div>
+                        </div>
+                        <div class="analysis-item">
+                            <span class="analysis-label">物理定性分析 (Product Physics)</span>
+                            <div class="analysis-value"><span class="color-swatch" style="background:#1A1A1A;"></span>旧化黑占比60% (复古高溢价选色)。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. 生产决策座舱 -->
+        <div class="section">
+            <div class="section-title">05. 生产决策座舱 (Production Command Dashboard)</div>
+            
+            <div style="font-weight: 800; color: var(--accent); margin-bottom: 20px; font-size: 1em;">三维视觉壳子指令与颜色适配方案 (Visual Shell & Color Mapping)</div>
+            
+            <div class="prod-grid">
+                <!-- Style 01: Studio Minimalist -->
+                <div class="prod-card">
+                    <div class="prod-tag">V01 极简重磅</div>
+                    <h3 style="margin:0; font-size: 1em; font-weight: 800;">[V01] Studio Minimalist</h3>
+                    
+                    <div class="prompt-box" id="prompt1">Medium shot of a male model from the chest down, half-face cropped, wearing a heavyweight <span class="color-field">[BLANK_T-SHIRT_COLOR]</span>, 30-degree hard side lighting creating deep textures, minimalist clean studio background, f/2.8, ultra-realistic --ar 3:4<button class="copy-btn" onclick="copyText('prompt1')">COPY</button></div>
+                    
+                    <div class="logic-card">
+                        <div class="color-logic-title">🎨 颜色适配建议:</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#000;"></div><b>曜石黑:</b> 最佳载体，侧光勾勒面料硬度。</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#fff;"></div><b>珍珠白:</b> 极简风首选，适合无印花重磅款。</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#0f172a;"></div><b>藏青色:</b> 提升商务质感，适合高溢价基本款。</div>
+                    </div>
+                </div>
+
+                <!-- Style 02: Urban Street -->
+                <div class="prod-card">
+                    <div class="prod-tag">V04 都市街头</div>
+                    <h3 style="margin:0; font-size: 1em; font-weight: 800;">[V04] Urban Street</h3>
+                    
+                    <div class="prompt-box" id="prompt2">Full body shot of a model walking, wearing an oversized boxy <span class="color-field">[T-SHIRT_COLOR]</span>, urban street background with motion blur, natural sunlight with soft shadows, f/1.8, high-end streetwear photography style --ar 3:4<button class="copy-btn" onclick="copyText('prompt2')">COPY</button></div>
+                    
+                    <div class="logic-card">
+                        <div class="color-logic-title">🎨 颜色适配建议:</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#94a3b8;"></div><b>水洗灰:</b> 配合街道模糊感，营造日常高级感。</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#d1d5db;"></div><b>水泥灰:</b> 工业风选色，适合落肩大廓形 SKU。</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#334155;"></div><b>深板岩:</b> 配合城市建筑色调，支撑街头溢价。</div>
+                    </div>
+                </div>
+
+                <!-- Style 03: Raw Concrete -->
+                <div class="prod-card">
+                    <div class="prod-tag">V03 复古工业</div>
+                    <h3 style="margin:0; font-size: 1em; font-weight: 800;">[V03] Raw Concrete</h3>
+                    
+                    <div class="prompt-box" id="prompt3">Close-up of a model leaning against a weathered concrete wall, wearing a <span class="color-field">[VINTAGE_WASHED_T-SHIRT_COLOR]</span>, harsh sunlight with dramatic shadows, 90s underground aesthetic, gritty texture, f/4.0, raw film photography style --ar 3:4<button class="copy-btn" onclick="copyText('prompt3')">COPY</button></div>
+                    
+                    <div class="logic-card">
+                        <div class="color-logic-title">🎨 颜色适配建议:</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#1a1a1a;"></div><b>复古黑:</b> 必须带陈旧感，与墙壁破损感呼应。</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#78350f;"></div><b>焦糖棕:</b> 90s 复古主色，配合混凝土产生高反差。</div>
+                        <div class="color-pair"><div class="color-dot" style="background:#4b5563;"></div><b>炭灰色:</b> 裂纹印花的最佳底板，强化“坏旧”视觉。</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 印花基因与设计方向 -->
+            <div class="prod-card" style="width: calc(100% - 44px); border-left: 4px solid var(--warning);">
+                <div class="prod-tag">基因进化</div>
+                <h3 style="margin:0; font-size: 1.1em; font-weight: 800;">C. 印花视觉进化方向 (示意图参考 Schematic Concepts)</h3>
+                <div class="prod-grid" style="grid-template-columns: 1fr 1fr; gap: 40px; border:none; padding:0; margin:0;">
+                    <ul class="direction-list">
+                        <li><b>[身份标签类]：</b>继续深化 Brother/Sister/Dog 题材，增加“幽默注脚（Subtext）”模块。</li>
+                        <li><b>[亚文化符号]：</b>重点关注“赌徒博弈（黑桃/骰子）”与“虚无主义（骷髅/厌世语录）”。</li>
+                    </ul>
+                    <ul class="direction-list">
+                        <li><b>[艺术流派]：</b>尝试“日式线条（Ukiyo-e）”与“现代赛博”的跨界融合。</li>
+                        <li><b>[物理处理]：</b>设计阶段即考虑“模拟破损”效果，配合 Vintage 线，追求“有故事的残缺”。</li>
+                    </ul>
+                </div>
+                <!-- 示意图网格 -->
+                <div class="schematic-grid">
+                    <div class="schematic-item">
+                        <img src="https://sc02.alicdn.com/kf/A5dd6cf5706f34df6a8efcba35ce82e71d.png" class="schematic-img">
+                        <div class="schematic-label">Brother 身份标签</div>
+                    </div>
+                    <div class="schematic-item">
+                        <img src="https://sc02.alicdn.com/kf/Ae05fded2ca6a4692a95429eed1e8c531C.png" class="schematic-img">
+                        <div class="schematic-label">赌徒/虚无主义</div>
+                    </div>
+                    <div class="schematic-item">
+                        <img src="https://sc02.alicdn.com/kf/A225ca11b65f140308996ee925f52153b1.png" class="schematic-img">
+                        <div class="schematic-label">日式赛博跨界</div>
+                    </div>
+                    <div class="schematic-item">
+                        <img src="https://sc02.alicdn.com/kf/Afdb9be3d07624e34acce36dca2153f29J.png" class="schematic-img">
+                        <div class="schematic-label">90s 复古裂纹</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. 视觉负面资产与避坑指南 -->
+        <div class="negative-section">
+            <div class="negative-title">06. 视觉负面资产与避坑指南 (Visual Red Flags & Anti-Patterns)</div>
+            <div class="negative-grid">
+                <!-- Bad Case Image Gallery -->
+                <div class="negative-case-card" style="background: #fff1f2;">
+                    <div class="warning-tag" style="margin-bottom: 10px;">TEMU SINGLE-SKU RED FLAGS</div>
+                    <div class="neg-img-grid">
+                        <div class="neg-img-box">
+                            <img src="https://img.kwcdn.com/product/Fancyalgo/VirtualModelMatting/4ddf550d6d3bc7ffa21c1aefcbfff797.jpg" class="neg-img">
+                            <div class="neg-img-tag">廉价细白绳</div>
+                        </div>
+                        <div class="neg-img-box">
+                            <img src="https://img.kwcdn.com/product/fancy/f714f87c-cfea-4add-9b89-a97bfcd333b2.jpg" class="neg-img">
+                            <div class="neg-img-tag">下摆香菇效应</div>
+                        </div>
+                        <div class="neg-img-box">
+                            <img src="https://img.kwcdn.com/product/fancy/abb1c0fa-ae57-4fd5-9060-e9ea9eca373b.jpg" class="neg-img">
+                            <div class="neg-img-tag">模糊低质印花</div>
+                        </div>
+                    </div>
+                    <div style="padding: 12px; background: #fff; border-radius: 8px; border: 1px dashed #f43f5e;">
+                        <p style="font-size: 0.75em; color: #be123c; margin: 0; font-weight: 700;">⚠ 避坑核心 (Anti-Pattern Matrix)：</p>
+                        <p style="font-size: 0.7em; color: #475569; margin: 5px 0 0;">以上三个单 SKU 案例展示了 TEMU 德/法站最拉低身价的物理信号。如果您的样张包含其中任何一项，溢价空间将瞬间缩减 50% 以上。</p>
+                    </div>
+                </div>
+
+                <!-- Red Flags List -->
+                <div class="negative-case-card">
+                    <div class="negative-item">
+                        <span class="warning-tag" style="background: #e11d48; margin-bottom: 8px;">廉价辅料 (Hardware)</span>
+                        <span class="negative-label">监测案例: "2024 Fashion Hoodie"</span>
+                        <div class="negative-value"><b>表现:</b> 极细的白色扁平绳（类似廉价鞋带），无金属包头。这是低端市场的标准“指纹”。<b>改进:</b> 换用同色系厚实编织绳。</div>
+                    </div>
+                    <div class="negative-item">
+                        <span class="warning-tag" style="background: #fb7185; margin-bottom: 8px;">工艺隐患 (Fit)</span>
+                        <span class="negative-label">监测案例: Heavyweight Polyester Hoodie</span>
+                        <div class="negative-value"><b>表现:</b> 严重的“香菇效应”。硬挺面料配合过紧螺纹，导致下摆不自然隆起。<b>改进:</b> 调整螺纹弹力比，确保直筒利落感。</div>
+                    </div>
+                    <div class="negative-item">
+                        <span class="warning-tag" style="background: #fda4af; margin-bottom: 8px;">视觉噪音 (UI)</span>
+                        <span class="negative-label">监测案例: 3D Digital Print Tee</span>
+                        <div class="negative-value"><b>表现:</b> 像素感极强的杂乱印花，背景与主体缺乏景深感。<b>改进:</b> 采用高分辨率适量稿，保持设计层次感。</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin:0; font-weight:900;">二级词挖掘</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;" id="tagCloud"></div>
+        </div>
+    </div>
+
+    <script>
+        Chart.register(ChartDataLabels);
+        const data = [
+            {"keyword": "Heavyweight", "share": 18, "trend3d": [98, 102, 105], "trend7d": [75, 82, 88, 92, 98, 102, 105], "trend30d": [65, 78, 92, 105], "secondary": ["300gsm", "100% Cotton", "Boxy Fit", "Premium"]},
+            {"keyword": "Oversized", "share": 15, "trend3d": [82, 85, 88], "trend7d": [68, 72, 75, 78, 82, 85, 88], "trend30d": [50, 62, 75, 88], "secondary": ["Drop Shoulder", "Streetwear", "Hip Hop", "Loose"]},
+            {"keyword": "Vintage", "share": 12, "trend3d": [75, 78, 80], "trend7d": [60, 65, 68, 72, 75, 78, 80], "trend30d": [45, 55, 68, 80], "secondary": ["Acid Wash", "90s Retro", "Faded", "Distressed"]},
+            {"keyword": "Graphic", "share": 10, "trend3d": [58, 62, 65], "trend7d": [45, 50, 55, 58, 62, 64, 65], "trend30d": [30, 42, 55, 65], "secondary": ["Anime", "Typo", "Cyber", "Bold"]},
+            {"keyword": "Acid Wash", "share": 9, "trend3d": [48, 52, 55], "trend7d": [35, 40, 45, 48, 52, 54, 55], "trend30d": [25, 35, 48, 55], "secondary": ["Charcoal", "Mineral", "Grey", "Washed"]},
+            {"keyword": "Minimalist", "share": 8, "trend3d": [42, 44, 45], "trend7d": [38, 40, 41, 42, 43, 44, 45], "trend30d": [35, 38, 42, 45], "secondary": ["Clean", "Logo", "Blank", "Essentials"]},
+            {"keyword": "Streetwear", "share": 7, "trend3d": [35, 38, 40], "trend7d": [28, 32, 35, 38, 40, 42, 43], "trend30d": [20, 30, 38, 43], "secondary": ["Urban", "Trend", "Hype", "Edgy"]},
+            {"keyword": "Embroidered", "share": 6, "trend3d": [25, 28, 30], "trend7d": [18, 22, 25, 28, 30, 32, 33], "trend30d": [15, 22, 30, 33], "secondary": ["Small Logo", "Chest", "Premium", "Patch"]},
+            {"keyword": "Hip Hop", "share": 5, "trend3d": [22, 25, 28], "trend7d": [15, 18, 20, 22, 25, 27, 28], "trend30d": [10, 18, 25, 28], "secondary": ["Baggy", "Old School", "Swag", "Rap"]},
+            {"keyword": "Japanese", "share": 4, "trend3d": [18, 20, 22], "trend7d": [12, 15, 18, 20, 22, 24, 25], "trend30d": [10, 15, 22, 25], "secondary": ["Ukiyo-e", "Kanji", "Hokusai", "Tokyo"]}
+        ];
+
+        const tbody = document.getElementById('keywordTable');
+        data.forEach((item, index) => {
+            tbody.innerHTML += `<tr>
+                <td style="font-weight:900; color:#94a3b8;">${index + 1}</td>
+                <td style="font-weight:700;">${item.keyword}</td>
+                <td style="font-weight:700;">${item.share}%</td>
+                <td class="trend-up">+${Math.floor(Math.random() * 10 + 5)}% ↑</td>
+                <td style="text-align:right;"><button class="btn-explore" onclick="openModal(${index})">EXPLORE</button></td>
+            </tr>`;
+        });
+
+        function openModal(index) {
+            const modal = document.getElementById('modal');
+            const cloud = document.getElementById('tagCloud');
+            cloud.innerHTML = '';
+            data[index].secondary.forEach(sec => {
+                cloud.innerHTML += `<div class="sec-tag">Men's T-shirt ${data[index].keyword} ${sec}</div>`;
+            });
+            modal.style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        // Charts
+        const ctxPie = document.getElementById('pieChart').getContext('2d');
+        new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: data.slice(0, 6).map(i => i.keyword).concat('Others'),
+                datasets: [{
+                    data: data.slice(0, 6).map(i => i.share).concat(29),
+                    backgroundColor: ['#0f172a', '#38bdf8', '#94a3b8', '#10b981', '#f59e0b', '#ef4444', '#cbd5e1'],
+                    borderWidth: 0
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', formatter: (val) => val + '%' } }
+            }
+        });
+
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        const labelsMap = {
+            3: ['D1', 'D2', 'D3'],
+            7: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            30: ['W1', 'W2', 'W3', 'W4']
+        };
+        const getDs = (d) => data.slice(0, 5).map((i, idx) => ({
+            label: i.keyword, data: i[`trend${d}d`], borderColor: ['#0f172a', '#38bdf8', '#94a3b8', '#10b981', '#f59e0b'][idx], tension: 0.4, borderWidth: 3, pointRadius: 0
+        }));
+        let lineChart = new Chart(ctxLine, {
+            type: 'line',
+            data: { labels: labelsMap[7], datasets: getDs(7) },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false, grid: { display: false } } }, plugins: { datalabels: { display: false } } }
+        });
+
+        function updateChart(d) {
+            document.querySelectorAll('.btn-time').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            lineChart.data.labels = labelsMap[d];
+            lineChart.data.datasets = getDs(d);
+            lineChart.update();
+        }
+
+        function copyText(id) {
+            const text = document.getElementById(id).innerText.replace('COPY', '');
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                btn.innerText = 'COPIED!';
+                setTimeout(() => btn.innerText = 'COPY', 2000);
+            });
+        }
+    </script>
+</body>
+</html>
