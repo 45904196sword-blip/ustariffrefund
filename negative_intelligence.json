@@ -1,0 +1,30 @@
+[
+  {
+    "case_id": "NEG-001",
+    "type": "IP_RISK",
+    "severity": "HIGH",
+    "description": "Mashup design mimicking Transformers (Optimus vs Megatron) color schemes/silhouettes.",
+    "impact": "Account suspension, legal takedown in EU markets."
+  },
+  {
+    "case_id": "NEG-002",
+    "type": "HARDWARE_CHEAPNESS",
+    "severity": "MEDIUM",
+    "description": "Thin, low-quality round drawstrings (white/grey) on heavyweight hoodie.",
+    "impact": "Signals 'cheap market goods' (€10-15 tier), prevents €35+ pricing."
+  },
+  {
+    "case_id": "NEG-003",
+    "type": "FIT_DEFECT",
+    "severity": "MEDIUM",
+    "description": "Mushroom effect caused by tight/thin ribbing on oversized garments.",
+    "impact": "Poor silhouette, high return rates due to bad fit."
+  },
+  {
+    "case_id": "NEG-004",
+    "type": "UI_CLUTTER",
+    "severity": "LOW",
+    "description": "Circular 'inset' patches on main hero image.",
+    "impact": "Destroys minimalist luxury branding, perceived as 'low-end/hard-sell' marketing."
+  }
+]
